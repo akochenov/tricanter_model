@@ -1,4 +1,4 @@
-function y = tric_outputs(m, Rtr, dH, cap_s, phi_s, phi_w, phi_s_out, phi_w_out, tr, geo, u, pc)
+function y = tric_outputs(m, Rtr, dH, E_s_i, phi_s, phi_w, phi_s_out, phi_w_out, tr, geo, u, pc)
 %TRIC_OUTPUTS Наблюдаемые величины и диагностика. Владелец: D.
 %
 %   phi_s, phi_w — n×J, концентрации ПОСЛЕ обновления
@@ -57,7 +57,7 @@ y.quality.phi_s_out  = phi_s_out;
 y.quality.phi_w_out  = phi_w_out;
 y.quality.phi_s_prof = sum(phi_s, 2);
 y.quality.phi_w_prof = sum(phi_w, 2);
-y.quality.cap_s      = cap_s;
+y.quality.E_s_i      = E_s_i;
 y.quality.tau_c      = 0.0;
 
 % --- flags ---

@@ -1,4 +1,4 @@
-function [cap, phi_next] = tric_settle_dyn(phi0, w, T_mat, phi_prev, tau, dt)
+function [E_i, phi_next] = tric_settle_dyn(phi0, w, T_mat, phi_prev, tau, dt)
 %TRIC_SETTLE_DYN Шаг каскада с концентрациями-состояниями. Владелец: B.
 %
 %   phi0     — объёмная доля дисперсной фазы на входе в машину
@@ -7,7 +7,7 @@ function [cap, phi_next] = tric_settle_dyn(phi0, w, T_mat, phi_prev, tau, dt)
 %   phi_prev — n×J, концентрации с предыдущего шага (СОСТОЯНИЕ)
 %   tau      — n×1, время пребывания по ячейкам, с
 %   dt       — шаг по времени, с
-%   cap      — n×1, захват по ячейкам в долях расхода
+%   E_i      — n×1, захват по ячейкам в долях расхода
 %   phi_next — n×J, концентрации на следующий шаг
 %
 % ЗАГЛУШКА: ничего не происходит, состояние не меняется.
@@ -16,7 +16,7 @@ function [cap, phi_next] = tric_settle_dyn(phi0, w, T_mat, phi_prev, tau, dt)
 % Формулы (§7.2 документа, питон — строки 210-215):
 %   up       = [phi0*w.'; phi_prev(1:end-1,:)]   <- сдвиг вниз, это и есть
 %                                                   транспортное запаздывание
-%   cap      = sum(up .* T_mat, 2)
+%   E_i      = sum(up .* T_mat, 2)
 %   star     = up .* (1 - T_mat)
 %   decay    = exp(-dt ./ max(tau, 1e-9))
 %   phi_next = star + (phi_prev - star) .* decay
@@ -30,6 +30,6 @@ function [cap, phi_next] = tric_settle_dyn(phi0, w, T_mat, phi_prev, tau, dt)
 %#codegen
 
 [n, J] = tric_dims();
-cap      = zeros(n, 1);
+E_i      = zeros(n, 1);
 phi_next = phi_prev;
 end

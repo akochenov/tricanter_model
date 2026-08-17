@@ -1,15 +1,15 @@
-function [cap_s, phi_s_next, phi_s_out] = tric_cascade_solids(phi_s, Rtr, geo, u, pc, dt)
+function [E_s_i, phi_s_next, phi_s_out] = tric_cascade_solids(phi_s, Rtr, geo, u, pc, dt)
 %TRIC_CASCADE_SOLIDS Осаждение твёрдого в водяном кольце. Владелец: B.
 %
 %   phi_s      — n×J, концентрации с предыдущего шага (СОСТОЯНИЕ)
 %   Rtr        — n×1, радиус поверхности кека, м
 %   dt         — шаг по времени, с
-%   cap_s      — n×1, захват по ячейкам
+%   E_s_i      — n×1, захват по ячейкам
 %   phi_s_next — n×J, концентрации на следующий шаг
 %   phi_s_out  — скаляр, доля твёрдого в фугате = sum(phi_s_next(end,:))
 %
 % ЗАГЛУШКА: захвата нет.
-% Эталон: ref_dyn/step1_vec_*.csv (cap_s), step1_sca_*.csv (k_s, pref_s).
+% Эталон: ref_dyn/step1_vec_*.csv (E_s_i), step1_sca_*.csv (k_s, pref_s).
 %
 % Кольцо r_i .. Rd, несущая — вода:
 %   tau_s  = pi*(Rtr.^2 - r_i^2)*Lax / Qw        <- зависит от ячейки И от кека
@@ -23,7 +23,7 @@ function [cap_s, phi_s_next, phi_s_out] = tric_cascade_solids(phi_s, Rtr, geo, u
 %#codegen
 
 [n, J]     = tric_dims();
-cap_s      = zeros(n, 1);
+E_s_i      = zeros(n, 1);
 phi_s_next = phi_s;
 phi_s_out  = u.eps_s / (u.eps_wf + u.eps_s);
 end
