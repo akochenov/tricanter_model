@@ -14,7 +14,7 @@
 """
 import numpy as np
 from dataclasses import dataclass
-import matplotlib.pyplot as plt
+
 G = 9.81
 
 
@@ -246,7 +246,7 @@ def step(t0, before, after):
     return lambda t: before if t < t0 else after
 
 
-def simulate(p, t_end=1500.0, dt=1.0, inputs=None, dynamic=True):
+def simulate(p, t_end=1500.0, dt=1.0, inputs=None, dynamic=False):
     """Явный Эйлер по массе кека.
 
     inputs — расписание входов, {имя параметра: функция от времени}, напр.
@@ -339,7 +339,5 @@ if __name__ == "__main__":
           f"вода в нефти {r['phi_w'][-1]*100:.2f}% (было {p.eps_wd/(p.eps_o+p.eps_wd)*100:.1f}%)")
 
     r2 = simulate(two_phase(), 1500)
-    plt.plot(r2['t'], r2['E_s'])
-    plt.show()
     print(f"двухфаза:  U={r2['U'][-1]:.3f}  E={r2['E_s'][-1]:.3f}  "
           f"осадок у входа {r2['dH'][-1, 0]*1000:.1f} мм")
