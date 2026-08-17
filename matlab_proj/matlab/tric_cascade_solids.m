@@ -8,7 +8,7 @@ function [E_s_i, phi_s_next, phi_s_out] = tric_cascade_solids(phi_s, Rtr, geo, u
 %   phi_s_next — n×J, концентрации на следующий шаг
 %   phi_s_out  — скаляр, доля твёрдого в фугате = sum(phi_s_next(end,:))
 %
-% ЗАГЛУШКА: захвата нет.
+% ПОКА_ЗАГЛУШКА: захвата нет.
 % Эталон: ref_dyn/step1_vec_*.csv (E_s_i), step1_sca_*.csv (k_s, pref_s).
 %
 % Кольцо r_i .. Rd, несущая — вода:

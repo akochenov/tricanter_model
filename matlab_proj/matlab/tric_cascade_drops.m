@@ -5,7 +5,7 @@ function [phi_w_next, phi_w_out] = tric_cascade_drops(phi_w, geo, u, pc, dt)
 %   phi_w_next — n×J, концентрации на следующий шаг
 %   phi_w_out  — остаточная обводнённость нефти = sum(phi_w_next(end,:))
 %
-% ЗАГЛУШКА: разделения нет.
+% ПОКА_ЗАГЛУШКА: разделения нет.
 % Эталон: ref_dyn/step1_phiw_next_*.csv, steady_out_*.csv (phi_w_out).
 %
 % Кольцо Ro .. r_i, несущая — нефть:

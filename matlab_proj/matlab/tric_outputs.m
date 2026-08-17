@@ -4,7 +4,7 @@ function y = tric_outputs(m, Rtr, dH, E_s_i, phi_s, phi_w, phi_s_out, phi_w_out,
 %   phi_s, phi_w — n×J, концентрации ПОСЛЕ обновления
 %   y            — шина BusTricOut: cake, streams, quality, flags
 %
-% ЗАГЛУШКА: заполняет то, что уже посчитано, остальное нулями.
+% ПОКА_ЗАГЛУШКА: заполняет то, что уже посчитано, остальное нулями.
 % Эталон: ref_dyn/steady_out_*.csv, trajectory_*.csv.
 %
 % Формулы:
@@ -68,4 +68,12 @@ y.flags.f_oil_collapse   = flags.oil_collapse;
 y.flags.f_water_collapse = flags.water_collapse;
 y.flags.f_overload       = false;
 y.flags.f_overfill       = false;
+y.flags.f_M1_limit = false;
+y.flags.f_M2_limit = false;
+
+% --- drives ---
+y.drives.M1 = 0;
+y.drives.P1 = 0;
+y.drives.M2 = 0;
+y.drives.P2 = 0;
 end
