@@ -1,0 +1,6 @@
+slprj/
+*.slxc
+*.asv
+*.autosave
+tricanter_top.slx.r*
+codegen/

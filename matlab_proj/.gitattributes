@@ -1,0 +1,7 @@
+*.slx   binary
+*.sldd  binary
+*.slxc  binary
+*.mat   binary
+*.mdl   binary
+*.asv   -text -diff
+*.mexw64 binary
