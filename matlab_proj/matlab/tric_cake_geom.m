@@ -5,7 +5,7 @@ function [Rtr, dH] = tric_cake_geom(m, geo, pc)
 %   Rtr — n×1, радиус поверхности кека, м
 %   dH  — n×1, толщина слоя осадка, м
 %
-% ПОКА_ЗАГЛУШКА: пустая машина, Rtr = Rd, dH = 0. Заглушка ОБЯЗАНА возвращать
+% КА_ЗАГЛУШКА: пустая машина, Rtr = Rd, dH = 0. Заглушка ОБЯЗАНА возвращать
 % именно Rd, а не нули: при Rtr = 0 время пребывания уйдёт в минус и B
 % с D будут отлаживать не свой код.
 %
@@ -17,6 +17,6 @@ function [Rtr, dH] = tric_cake_geom(m, geo, pc)
 
 n = tric_dims();
 
-Rtr = pc.Rd * ones(n,1);
-dH  = zeros(n,1);
+Rtr = sqrt(max(pc.Rd^2 - m/(pc.rho_s*pc.phi_sed*pi*geo.Lax), geo.r_i^2));
+dH  = pc.Rd - Rtr;
 end
