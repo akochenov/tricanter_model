@@ -14,6 +14,8 @@
 """
 import numpy as np
 from dataclasses import dataclass
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 G = 9.81
 
@@ -28,7 +30,7 @@ class Params:
     alpha: float = 7.0       # полуугол конуса, град
     Lsep: float = 0.0        # путь осаждения; 0 = вывести из геометрии конуса
     n: int = 25
-    J: int = 40
+    J: int = 100
 
     rho_s: float = 2720.0
     rho_w: float = 998.0
@@ -36,7 +38,7 @@ class Params:
     eta_w: float = 1e-3      # вязкость воды, Па·с
     eta_o: float = 0.03      # вязкость нефти, Па·с
 
-    C: float = 1500.0        # фактор разделения, g
+    C: float = 25.0        # фактор разделения, g
     Q: float = 30 / 3.6e6    # подача, м3/с
     dn: float = 10.0         # диф. скорость шнека, об/мин
 
@@ -208,11 +210,16 @@ def simulate_dyn(p, t_end, dt, inputs=None):
         pref_s = p.Rd ** 2 / max(p.Rd ** 2 - p.r_i ** 2, 1e-12)
         phi_s0 = p.eps_s / (p.eps_w + p.eps_s)
         T_s = grade(xs, k_s, tau_s * p.f_clar, pref_s, phi_s, p.phi_ref)
-        up_s = np.vstack([phi_s0 * ws, phi_s[:-1]])
-        cap_s = (up_s * T_s).sum(1)
-        star = up_s * (1 - T_s)
-        decay = np.exp(-dt / np.maximum(tau_s, 1e-9))[:, None]
-        phi_s = star + (phi_s - star) * decay
+        decay_s = np.exp(-dt / np.maximum(tau_s, 1e-9))
+        cap_s = np.zeros(p.n)
+        phi_s_next = np.empty_like(phi_s)
+        up = phi_s0 * ws                    # вход первой ячейки
+        for c in range(p.n):               # c, не i: i занят внешним циклом по времени
+            cap_s[c] = (up * T_s[c]).sum()
+            star_c = up * (1 - T_s[c])
+            phi_s_next[c] = star_c + (phi_s[c] - star_c) * decay_s[c]
+            up = phi_s_next[c]              # уже на текущем шаге, не на прошлом
+        phi_s = phi_s_next
 
         # капли воды в нефти
         if p.has_oil and p.r_i - p.Ro > 1e-6:
@@ -221,9 +228,14 @@ def simulate_dyn(p, t_end, dt, inputs=None):
             pref_w = p.r_i ** 2 / max(p.r_i ** 2 - p.Ro ** 2, 1e-12)
             phi_w0 = p.eps_wd / (p.eps_o + p.eps_wd)
             T_w = grade(xw, k_w, tau_o * p.f_clar, pref_w, phi_w, p.phi_max)
-            up_w = np.vstack([phi_w0 * ww, phi_w[:-1]])
-            star_w = up_w * (1 - T_w)
-            phi_w = star_w + (phi_w - star_w) * np.exp(-dt / tau_o)[:, None]
+            decay_w = np.exp(-dt / tau_o)
+            phi_w_next = np.empty_like(phi_w)
+            up = phi_w0 * ww
+            for c in range(p.n):
+                star_c = up * (1 - T_w[c])
+                phi_w_next[c] = star_c + (phi_w[c] - star_c) * decay_w[c]
+                up = phi_w_next[c]
+            phi_w = phi_w_next
             out_w = phi_w[-1].sum()
         else:
             phi_w0 = p.eps_wd / (p.eps_o + p.eps_wd) if p.has_oil else 0.0
@@ -246,7 +258,7 @@ def step(t0, before, after):
     return lambda t: before if t < t0 else after
 
 
-def simulate(p, t_end=1500.0, dt=1.0, inputs=None, dynamic=True):
+def simulate(p, t_end=1500.0, dt=1.0, inputs=None, dynamic=False):
     """Явный Эйлер по массе кека.
 
     inputs — расписание входов, {имя параметра: функция от времени}, напр.
@@ -339,7 +351,9 @@ if __name__ == "__main__":
           f"вода в нефти {r['phi_w'][-1]*100:.2f}% (было {p.eps_wd/(p.eps_o+p.eps_wd)*100:.1f}%)")
 
     r2 = simulate(two_phase(), 1500)
-    plt.plot(r2['t'], r2['E_s'])
-    plt.show()
     print(f"двухфаза:  U={r2['U'][-1]:.3f}  E={r2['E_s'][-1]:.3f}  "
           f"осадок у входа {r2['dH'][-1, 0]*1000:.1f} мм")
+    plt.plot(r2['t'], r2['U'])
+    plt.show()
+    plt.plot(r2['t'], r2['E_s'], color="g")
+    plt.show()
