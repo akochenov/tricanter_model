@@ -1,4 +1,4 @@
-function [E_s_i, phi_s_next, phi_s_out] = tric_cascade_solids(phi_s, Rtr, geo, u, pc, dt)
+function [cap_s, phi_s_next, phi_s_out] = tric_cascade_solids(phi_s, Rtr, geo, u, pc, dt)
 %TRIC_CASCADE_SOLIDS Осаждение твёрдого в водяном кольце. Владелец: B.
 %
 %   phi_s      — n×J, концентрации с предыдущего шага (СОСТОЯНИЕ)
@@ -23,7 +23,7 @@ function [E_s_i, phi_s_next, phi_s_out] = tric_cascade_solids(phi_s, Rtr, geo, u
 %#codegen
 
 [n, J]     = tric_dims();
-E_s_i      = zeros(n, 1);
+cap_s      = zeros(n, 1);
 phi_s_next = phi_s;
 phi_s_out  = u.eps_s / (u.eps_wf + u.eps_s);
 end

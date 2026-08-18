@@ -22,11 +22,11 @@ geo = tric_geometry(u, pc);
 
 [Rtr, dH] = tric_cake_geom(m, geo, pc);
 
-[E_s_i, phi_s_next, phi_s_out] = tric_cascade_solids(phi_s, Rtr, geo, u, pc, dt);
+[cap_s, phi_s_next, phi_s_out] = tric_cascade_solids(phi_s, Rtr, geo, u, pc, dt);
 [phi_w_next, phi_w_out]        = tric_cascade_drops(phi_w, geo, u, pc, dt);
 
-[dm, tr] = tric_cake_balance(Rtr, E_s_i, geo, pc);
+[dm, tr] = tric_cake_balance(Rtr, cap_s, geo, pc);
 
-y = tric_outputs(m, Rtr, dH, E_s_i, phi_s_next, phi_w_next, ...
+y = tric_outputs(m, Rtr, dH, cap_s, phi_s_next, phi_w_next, ...
                  phi_s_out, phi_w_out, tr, geo, u, pc);
 end
