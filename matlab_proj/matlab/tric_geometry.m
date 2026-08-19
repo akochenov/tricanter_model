@@ -1,12 +1,17 @@
 function geo = tric_geometry(u, pc)
-%TRIC_GEOMETRY Алгебраическая преамбула модели. Владелец: A. ГОТОВО.
+%TRIC_GEOMETRY Алгебраическая преамбула модели. Владелец: A.
 %
-%   u  — шина входов (BusTricInputs): Q, dn, C, Ro, Rw, eps_*, x50, d50
-%   pc — шина параметров (BusTricParams): Rd, Wsc, Lpond, alpha, Lsep,
-%        mu_s, u_conv, rho_*, ...
+%   u  — шина входов (BusTricInputs)
+%   pc — шина параметров (BusTricParams)
 %   geo — шина BusTricGeo
 %
-% Перенос @property из питон-класса Params. Эталон: ref/geometry_*.csv
+% Перенос @property из питон-класса Params (tricanter3_oil.py).
+% Эталон: ref_dyn/geometry_*.csv (при frac_s_in_oil = 0).
+%
+% ОБНОВЛЕНО под трёхпопуляционную модель: твёрдое подачи делится между
+% несущими фазами долей frac_s_in_oil, поэтому изменились Qo, Qw и все
+% входные концентрации. При frac_s_in_oil = 0 всё вырождается в прежние
+% формулы до последнего бита.
 %#codegen
 
 G = 9.81;
@@ -49,11 +54,48 @@ else
     r_i = u.Rw;
 end
 
-% --- расходы по кольцам (капли разбавлены) ---
-Qo = u.Q * (u.eps_o + u.eps_wd);
-Qw = u.Q * (u.eps_wf + u.eps_s);
+% --- есть ли нефтяное КОЛЬЦО, а не только нефть ---
+% Отдельный флаг: нефть в подаче может быть, а кольца уже нет, если
+% r_i прижался к нефтяному сливу. Тогда в нефтяном кольце ничего
+% не оседает, и обе «нефтяные» популяции идут насквозь.
+oil = has_oil && (r_i - u.Ro > 1e-6);
 
-% --- сборка выходной шины ---
+% --- деление твёрдого подачи между несущими фазами ---
+% Эмпирический вход (смачиваемость, история эмульсии), из состава
+% не выводится. Без нефти диспергировать не во что.
+if has_oil
+    f_so = min(max(u.frac_s_in_oil, 0), 1);
+else
+    f_so = 0;
+end
+eps_s_o = u.eps_s * f_so;           % твёрдое, пришедшее внутри нефти
+eps_s_w = u.eps_s * (1 - f_so);     % твёрдое, пришедшее внутри воды
+
+% --- расходы по кольцам ---
+% Твёрдое, диспергированное в нефти, едет с нефтяным расходом, поэтому
+% входит в Qo, а не в Qw. Переток через границу расходы не меняет:
+% дисперсии разбавлены.
+Qo = u.Q * (u.eps_o + u.eps_wd + eps_s_o);
+Qw = u.Q * (u.eps_w + eps_s_w);
+
+% --- входные доли дисперсных фаз в своих несущих ---
+d_w = u.eps_w + eps_s_w;
+if d_w > 0
+    phi_s0 = eps_s_w / d_w;         % твёрдое в воде
+else
+    phi_s0 = 0;
+end
+
+d_o = u.eps_o + u.eps_wd + eps_s_o;
+if d_o > 0
+    phi_so0 = eps_s_o / d_o;        % твёрдое в нефти
+    phi_w0  = u.eps_wd / d_o;       % капли воды в нефти
+else
+    phi_so0 = 0;
+    phi_w0  = 0;
+end
+
+% --- сборка выходной шины. Порядок обязан совпасть с BusTricGeo ---
 geo.omega   = omega;
 geo.beta    = beta;
 geo.Lax     = Lax;
@@ -64,4 +106,9 @@ geo.r_i     = r_i;
 geo.Qo      = Qo;
 geo.Qw      = Qw;
 geo.has_oil = has_oil;
+geo.oil     = oil;
+geo.f_so    = f_so;
+geo.phi_s0  = phi_s0;
+geo.phi_so0 = phi_so0;
+geo.phi_w0  = phi_w0;
 end

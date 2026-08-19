@@ -9,7 +9,8 @@ function build_model(mdl, ddPath)
 % Структура:
 %   Inputs (Constant)  ──┐
 %   Params (Constant)  ──┼──> RHS ──> Cake mass ──┐
-%                        │      ├──> phi_s state ─┤ обратные связи
+%                        │      ├──> phi_s state ─┤
+%                        │      ├──> phi_so state┤ обратные связи
 %                        │      ├──> phi_w state ─┤
 %                        └──────┴──────────────────┘
 %                               └──> log y (To Workspace)
@@ -65,13 +66,19 @@ add_block('simulink/Discrete/Unit Delay', [mdl '/phi_s state'], ...
     'InitialCondition', 'phi0', ...
     'SampleTime', 'Ts');
 
-add_block('simulink/Discrete/Unit Delay', [mdl '/phi_w state'], ...
+% Твёрдое, пришедшее внутри нефти — третья дисперсная популяция.
+add_block('simulink/Discrete/Unit Delay', [mdl '/phi_so state'], ...
     'Position', [500 165 570 205], ...
     'InitialCondition', 'phi0', ...
     'SampleTime', 'Ts');
 
-add_block('simulink/Sinks/To Workspace', [mdl '/log y'], ...
+add_block('simulink/Discrete/Unit Delay', [mdl '/phi_w state'], ...
     'Position', [500 225 570 265], ...
+    'InitialCondition', 'phi0', ...
+    'SampleTime', 'Ts');
+
+add_block('simulink/Sinks/To Workspace', [mdl '/log y'], ...
+    'Position', [500 285 570 325], ...
     'VariableName', 'y', ...
     'SaveFormat', 'Structure With Time', ...
     'MaxDataPoints', 'inf');
@@ -80,19 +87,21 @@ add_block('simulink/Sinks/To Workspace', [mdl '/log y'], ...
 set_rhs_body(mdl);
 
 %% --- провода ---
-% Порядок входов RHS: m, phi_s, phi_w, u, pc
-% Порядок выходов:    dm, phi_s_next, phi_w_next, y
-add_line(mdl, 'Inputs/1', 'RHS/4', 'autorouting', 'smart');
-add_line(mdl, 'Params/1', 'RHS/5', 'autorouting', 'smart');
+% Порядок входов RHS: m, phi_s, phi_so, phi_w, u, pc
+% Порядок выходов:    dm, phi_s_next, phi_so_next, phi_w_next, y
+add_line(mdl, 'Inputs/1', 'RHS/5', 'autorouting', 'smart');
+add_line(mdl, 'Params/1', 'RHS/6', 'autorouting', 'smart');
 
-add_line(mdl, 'RHS/1', 'Cake mass/1',   'autorouting', 'smart');
-add_line(mdl, 'RHS/2', 'phi_s state/1', 'autorouting', 'smart');
-add_line(mdl, 'RHS/3', 'phi_w state/1', 'autorouting', 'smart');
-add_line(mdl, 'RHS/4', 'log y/1',       'autorouting', 'smart');
+add_line(mdl, 'RHS/1', 'Cake mass/1',    'autorouting', 'smart');
+add_line(mdl, 'RHS/2', 'phi_s state/1',  'autorouting', 'smart');
+add_line(mdl, 'RHS/3', 'phi_so state/1', 'autorouting', 'smart');
+add_line(mdl, 'RHS/4', 'phi_w state/1',  'autorouting', 'smart');
+add_line(mdl, 'RHS/5', 'log y/1',        'autorouting', 'smart');
 
-add_line(mdl, 'Cake mass/1',   'RHS/1', 'autorouting', 'smart');
-add_line(mdl, 'phi_s state/1', 'RHS/2', 'autorouting', 'smart');
-add_line(mdl, 'phi_w state/1', 'RHS/3', 'autorouting', 'smart');
+add_line(mdl, 'Cake mass/1',    'RHS/1', 'autorouting', 'smart');
+add_line(mdl, 'phi_s state/1',  'RHS/2', 'autorouting', 'smart');
+add_line(mdl, 'phi_so state/1', 'RHS/3', 'autorouting', 'smart');
+add_line(mdl, 'phi_w state/1',  'RHS/4', 'autorouting', 'smart');
 
 %% --- решатель ---
 % Шаг задан буквами. Если разойдётся с Ts из словаря, экспонента
@@ -125,13 +134,16 @@ root  = sfroot;
 chart = root.find('-isa', 'Stateflow.EMChart', '-and', 'Path', [mdl '/RHS']);
 
 chart.Script = sprintf([ ...
-    'function [dm, phi_s_next, phi_w_next, y] = fcn(m, phi_s, phi_w, u, pc, Ts)\n' ...
+    'function [dm, phi_s_next, phi_so_next, phi_w_next, y] = ' ...
+    'fcn(m, phi_s, phi_so, phi_w, u, pc, Ts)\n' ...
     '%%#codegen\n' ...
-    '[dm, phi_s_next, phi_w_next, y] = tric_rhs(m, phi_s, phi_w, u, pc, Ts);\n']);
+    '[dm, phi_s_next, phi_so_next, phi_w_next, y] = ' ...
+    'tric_rhs(m, phi_s, phi_so, phi_w, u, pc, Ts);\n']);
 
 % Порты создаются разбором кода; ждём и настраиваем.
 setPort(chart, 'm',          'Input',  'double',              sprintf('[%d 1]', n));
 setPort(chart, 'phi_s',      'Input',  'double',              sprintf('[%d %d]', n, J));
+setPort(chart, 'phi_so',     'Input',  'double',              sprintf('[%d %d]', n, J));
 setPort(chart, 'phi_w',      'Input',  'double',              sprintf('[%d %d]', n, J));
 setPort(chart, 'u',          'Input',  'Bus: BusTricInputs',  '-1');
 setPort(chart, 'pc',         'Input',  'Bus: BusTricParams',  '-1');
@@ -139,6 +151,7 @@ setPort(chart, 'Ts',         'Parameter', 'double',           '1');
 
 setPort(chart, 'dm',         'Output', 'double',              sprintf('[%d 1]', n));
 setPort(chart, 'phi_s_next', 'Output', 'double',              sprintf('[%d %d]', n, J));
+setPort(chart, 'phi_so_next','Output', 'double',              sprintf('[%d %d]', n, J));
 setPort(chart, 'phi_w_next', 'Output', 'double',              sprintf('[%d %d]', n, J));
 setPort(chart, 'y',          'Output', 'Bus: BusTricOut',     '-1');
 

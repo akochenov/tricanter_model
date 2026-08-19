@@ -33,12 +33,15 @@ for tag = {'3ph', '2ph'}
 
     % step1 держит все ловушки твёрдого: k_s через eta_w,
     % pref_s через Rd (не Rtr), phi_s0 через eps_wf, tau с f_clar в grade.
-    [cap_s, phi_s_next, ~] = tric_cascade_solids(zeros(n, J), v.Rtr, geo, u, pc, dt);
+    % moved — переток из нефтяного кольца, при frac_s_in_oil = 0 нулевой.
+    [cap_s, phi_s_next, ~] = tric_cascade_solids(zeros(n, J), zeros(n, J), ...
+                                                 v.Rtr, geo, u, pc, dt);
     fprintf('    step1 cap_s vs эталон:        ');  chk(cap_s, v.cap_s);
     fprintf('    step1 phi_s_next vs эталон:   ');  chk(phi_s_next, phis1_ref);
 
     % steady. Здесь оживает множитель стеснения.
-    [cap_s2, phi_s2, phi_s_out] = tric_cascade_solids(Psteady, vs.Rtr, geo, u, pc, dt);
+    [cap_s2, phi_s2, phi_s_out] = tric_cascade_solids(Psteady, zeros(n, J), ...
+                                                      vs.Rtr, geo, u, pc, dt);
     fprintf('    steady cap_s vs эталон:       ');  chk(cap_s2, ssv.cap_s);
     fprintf('    steady phi_s_next vs эталон:  ');
     chk(phi_s2, ref_mat(['steady_step_phis_next_' t]));

@@ -39,11 +39,13 @@ chk_named('r_i = Rw', geo2.r_i, u2.Rw, 1e-14);
 [n, J] = tric_dims();
 m   = zeros(n, 1);
 phi = zeros(n, J);
-[dm, phi_s_next, phi_w_next, y] = tric_rhs(m, phi, phi, u, pc, Ts);
+% Четыре состояния: масса кека и три дисперсные популяции.
+[dm, phi_s_next, phi_so_next, phi_w_next, y] = tric_rhs(m, phi, phi, phi, u, pc, Ts);
 
 fprintf('Сквозной прогон tric_rhs:\n');
 assert(isequal(size(dm), [n 1]),         'dm: ожидалось %dx1', n);
 assert(isequal(size(phi_s_next), [n J]), 'phi_s_next: ожидалось %dx%d', n, J);
+assert(isequal(size(phi_so_next), [n J]), 'phi_so_next: ожидалось %dx%d', n, J);
 assert(isequal(size(phi_w_next), [n J]), 'phi_w_next: ожидалось %dx%d', n, J);
 assert(all(isfinite(dm)),                'dm содержит NaN или Inf');
 assert(isequal(size(y.cake.Rtr), [n 1]), 'y.cake.Rtr: ожидалось %dx1', n);

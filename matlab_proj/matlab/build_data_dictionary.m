@@ -28,11 +28,13 @@ sec = dd.getSection('Design Data');
 
 %% ---------- шины ----------
 
-% Входы: 12 элементов
+% Входы: 14 элементов
 mkbus(sec, 'BusTricInputs', {
     'eta_o'   'double'  1
     'd50'     'double'  1
     'x50'     'double'  1
+    'x50_so'  'double'  1
+    'frac_s_in_oil' 'double' 1
     'eps_s'   'double'  1
     'eps_wd'  'double'  1
     'eps_wf'  'double'  1
@@ -43,7 +45,7 @@ mkbus(sec, 'BusTricInputs', {
     'dn'      'double'  1
     'C'       'double'  1 });
 
-% Параметры: 17 элементов
+% Параметры: 20 элементов
 mkbus(sec, 'BusTricParams', {
     'Rd'       'double'   1
     'Wsc'      'double'   1
@@ -61,9 +63,12 @@ mkbus(sec, 'BusTricParams', {
     'u_conv'   'double'   1
     'bs'       'double'   1
     'bw'       'double'   1
-    'rrsb'     'boolean'  1 });
+    'rrsb'     'boolean'  1
+    'b_so'     'double'   1
+    'rrsb_so'  'double'   1
+    'inject_at_interface' 'boolean' 1 });
 
-% Геометрия: 10 элементов
+% Геометрия: 15 элементов
 mkbus(sec, 'BusTricGeo', {
     'omega'    'double'   1
     'beta'     'double'   1
@@ -74,7 +79,12 @@ mkbus(sec, 'BusTricGeo', {
     'r_i'      'double'   1
     'Qo'       'double'   1
     'Qw'       'double'   1
-    'has_oil'  'boolean'  1 });
+    'has_oil'  'boolean'  1
+    'oil'      'boolean'  1
+    'f_so'     'double'   1
+    'phi_s0'   'double'   1
+    'phi_so0'  'double'   1
+    'phi_w0'   'double'   1 });
 
 % Вложенные шины выхода
 mkbus(sec, 'BusCake', {
@@ -82,7 +92,8 @@ mkbus(sec, 'BusCake', {
     'dH'          'double'  n
     'm_cake'      'double'  n
     'm_cake_tot'  'double'  1
-    'tau_s'       'double'  n });
+    'tau_s'       'double'  n
+    'q_cake'      'double'  1 });
 
 mkbus(sec, 'BusStreams', {
     'mdot_oil'      'double'  1
@@ -95,10 +106,15 @@ mkbus(sec, 'BusStreams', {
 mkbus(sec, 'BusQuality', {
     'U'           'double'  1
     'E_s'         'double'  1
+    'E_so'        'double'  1
     'E_w'         'double'  1
+    'E_s_tot'     'double'  1
     'phi_s_out'   'double'  1
+    'phi_so_out'  'double'  1
     'phi_w_out'   'double'  1
+    'bsw'         'double'  1
     'phi_s_prof'  'double'  n
+    'phi_so_prof' 'double'  n
     'phi_w_prof'  'double'  n
     'E_s_i'       'double'  n
     'tau_c'       'double'  1 });
@@ -138,7 +154,10 @@ p = struct( ...
     'u_conv',  0.57,   ...
     'bs',      3.0,    ...
     'bw',      2.0,    ...
-    'rrsb',    false);
+    'rrsb',    false,  ...
+    'b_so',    0.0,    ...
+    'rrsb_so', -1.0,   ...
+    'inject_at_interface', false);
 
 % Начальные входы. Порядок обязан совпасть с BusTricInputs.
 % eta_o лежит здесь, а не в параметрах: сценарий 13.5 меняет её
@@ -147,6 +166,8 @@ inp = struct( ...
     'eta_o',  0.03,     ...
     'd50',    3.0e-6,   ...
     'x50',    1.5e-6,   ...
+    'x50_so', 0.0,      ...
+    'frac_s_in_oil', 0.25, ...
     'eps_s',  0.02,     ...
     'eps_wd', 0.08,     ...
     'eps_wf', 0.30,     ...
@@ -176,6 +197,8 @@ dd.close();
 
 fprintf('Словарь собран: %s\n', ddPath);
 fprintf('  шин: 8, значений: 5, ячеек n=%d, классов J=%d\n', n, J);
+fprintf('  ВНИМАНИЕ: frac_s_in_oil = %.2f. Эталоны в ref_dyn/ выгружены\n', inp.frac_s_in_oil);
+fprintf('  при frac_s_in_oil = 0 и действительны только на этом значении.\n');
 
 end
 
