@@ -8,61 +8,46 @@ function [phi_w_next, phi_w_out] = tric_cascade_drops(phi_w, geo, u, pc, dt)
 %   phi_w_next — n×J, концентрации на следующий шаг
 %   phi_w_out  — остаточная обводнённость нефти
 %
-% Питон-оригинал — строки 225-241 simulate_dyn.
-% Эталон: ref_dyn/step1_phiw_next_*.csv, steady_out_*.csv (phi_w_out).
+% Кольцо Ro .. r_i, несущая — НЕФТЬ (eta_o из ВХОДОВ, не из параметров:
+% сценарий 13.5 меняет её при охлаждении сырья).
 %
-% Кольцо Ro .. r_i, несущая фаза — НЕФТЬ (eta_o из ВХОДОВ, не из
-% параметров: сценарий 13.5 меняет её при охлаждении сырья).
+% Захвата в возврате нет: капли садятся на границу нефть-вода, в кек
+% не идут и в баланс массы твёрдого не входят. Этим они отличаются
+% от твёрдого в нефти, которое границу пересекает — см.
+% tric_cascade_solids_oil.
 %
-% Захвата в возврате нет: капли садятся на границу нефть-вода,
-% в кек не идут и в баланс массы не входят.
+% ВНИМАНИЕ: phi_w0 теперь считается в tric_geometry и знаменатель у него
+% eps_o + eps_wd + eps_s_o, а не eps_o + eps_wd. При frac_s_in_oil = 0
+% это одно и то же.
 %#codegen
+
+if ~geo.oil
+    % Кольца нет: либо нефти вообще нет (двухфазный режим), либо r_i
+    % прижался к сливу. Разделяться негде — состояние не обновляется,
+    % на выход идёт входная концентрация. В двухфазном режиме
+    % geo.phi_w0 = 0, поэтому получаются честные нули.
+    phi_w_next = phi_w;
+    phi_w_out  = geo.phi_w0;
+    return
+end
 
 [n, J] = tric_dims();
 
-% Три ветки вместо питоновских двух с тернарником. Для codegen каждая
-% обязана присвоить phi_w_next одного и того же размера n×J.
-if geo.has_oil && (geo.r_i - u.Ro > 1e-6)
+% Капли всегда сигмоидные: pc.rrsb относится только к твёрдому.
+[xw, ww] = tric_psd(u.d50, pc.bw, false);
 
-    % Классы капель. rrsb здесь всегда false, форма распределения
-    % сигмоидная — параметр pc.rrsb относится только к твёрдому.
-    [xw, ww] = tric_psd(u.d50, pc.bw, false);
+tau_o = (pi * (geo.r_i^2 - u.Ro^2) * geo.Lax / geo.Qo) * ones(n, 1);
 
-    % Кольцо нефти от кека не зависит, поэтому tau одинаково во всех
-    % ячейках. Раздуть до n×1 всё равно обязательно: grade и settle_dyn
-    % ждут вектор по ячейкам.
-    tau_o = (pi * (geo.r_i^2 - u.Ro^2) * geo.Lax / geo.Qo) * ones(n, 1);
+% Несущая — нефть. Перепутать с eta_w значит ошибиться в тридцать раз.
+k_w = (pc.rho_w - pc.rho_o) * geo.omega^2 / (18 * u.eta_o);
 
-    % Несущая — нефть. eta_o, не eta_w: разница в тридцать раз.
-    k_w = (pc.rho_w - pc.rho_o) * geo.omega^2 / (18 * u.eta_o);
+pref_o = geo.r_i^2 / max(geo.r_i^2 - u.Ro^2, 1e-12);
 
-    % Префактор через r_i, а не через Rd: капли оседают на границу
-    % нефть-вода, внешняя стенка кольца для них — это r_i.
-    pref_w = geo.r_i^2 / max(geo.r_i^2 - u.Ro^2, 1e-12);
+% Опорная концентрация — phi_max (плотная упаковка капель), не phi_ref.
+T_w = tric_grade(xw, k_w, tau_o * geo.f_clar, pref_o, phi_w, pc.phi_max);
 
-    phi_w0 = u.eps_wd / (u.eps_o + u.eps_wd);
+[~, ~, phi_w_next] = tric_settle_dyn(geo.phi_w0, ww, zeros(n, J), ...
+                                     T_w, phi_w, tau_o, dt);
 
-    % Опорная концентрация — phi_max (плотная упаковка капель),
-    % а не phi_ref. phi_ref относится к твёрдому в воде.
-    T_w = tric_grade(xw, k_w, tau_o * geo.f_clar, pref_w, phi_w, pc.phi_max);
-
-    [~, phi_w_next] = tric_settle_dyn(phi_w0, ww, T_w, phi_w, tau_o, dt);
-
-    phi_w_out = sum(phi_w_next(end, :));
-
-elseif geo.has_oil
-
-    % Нефть есть, а кольца нет: r_i прижался к нефтяному сливу.
-    % Разделяться негде, состояние не обновляется вообще,
-    % на выход идёт входная концентрация.
-    phi_w_next = phi_w;
-    phi_w_out  = u.eps_wd / (u.eps_o + u.eps_wd);
-
-else
-
-    % Двухфазный режим: нефти нет, капель нет.
-    phi_w_next = zeros(n, J);
-    phi_w_out  = 0;
-
-end
+phi_w_out = sum(phi_w_next(end, :));
 end
