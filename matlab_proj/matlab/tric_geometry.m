@@ -76,10 +76,10 @@ eps_s_w = u.eps_s * (1 - f_so);     % твёрдое, пришедшее вну�
 % входит в Qo, а не в Qw. Переток через границу расходы не меняет:
 % дисперсии разбавлены.
 Qo = u.Q * (u.eps_o + u.eps_wd + eps_s_o);
-Qw = u.Q * (u.eps_w + eps_s_w);
+Qw = u.Q * (u.eps_wf + eps_s_w);
 
 % --- входные доли дисперсных фаз в своих несущих ---
-d_w = u.eps_w + eps_s_w;
+d_w = u.eps_wf + eps_s_w;
 if d_w > 0
     phi_s0 = eps_s_w / d_w;         % твёрдое в воде
 else

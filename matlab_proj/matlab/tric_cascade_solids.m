@@ -32,7 +32,7 @@ function [cap_s, phi_s_next, phi_s_out] = tric_cascade_solids(phi_s, moved, Rtr,
 % Это единственный канал обратной связи «кек -> осаждение».
 tau_s = pi * (Rtr.^2 - geo.r_i^2) * geo.Lax / geo.Qw;
 
-k_s    = (pc.rho_s - pc.rho_w) * geo.omega^2 / (18 * pc.eta_w);
+k_s    = (pc.rho_s - pc.rho_w) * geo.omega^2 / (18 * pc.eta_wf);
 pref_s = pc.Rd^2 / max(pc.Rd^2 - geo.r_i^2, 1e-12);
 
 % --- переток из нефти, пересчитанный в доли водяного расхода ---

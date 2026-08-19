@@ -15,6 +15,6 @@ function [dm, tr] = tric_cake_balance(Rtr, cap_s, geo, pc)
 
 n = tric_dims();
 
-tr = pc.phi_sed*pc.rho_s*pi*(pc.Rd^2 - Rtr^2)*geo.u_ax;
+tr = pc.phi_sed*pc.rho_s*pi*(pc.Rd^2 - Rtr.^2)*geo.u_ax;
 dm = pc.rho_s*geo.Qw*cap_s + [tr(2:end); 0] - tr;
 end
