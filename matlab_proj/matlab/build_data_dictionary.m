@@ -4,8 +4,14 @@ function build_data_dictionary(ddPath)
 %   build_data_dictionary                       % создаёт ./tricanter_data.sldd
 %   build_data_dictionary('data/tricanter_data.sldd')
 %
-% Заменяет ручной набор в Type Editor. Если словарь уже существует —
-% пересоздаёт с нуля, поэтому ручные правки в нём будут потеряны.
+% ВНИМАНИЕ, СКРИПТ ОТСТАЛ ОТ РЕАЛЬНОГО СЛОВАРЯ. В tricanter_data.sldd
+% сейчас есть то, чего здесь нет:
+%   * шина BusDrives (M1, P1, M2, P2) и ветка drives в BusTricOut;
+%   * флаги f_M1_limit, f_M2_limit в BusFlags (там 8 элементов, не 6);
+%   * заполненные Description и DocUnits у всех элементов.
+% Запуск пересоздаёт словарь С НУЛЯ и всё перечисленное сотрёт.
+% Пока скрипт не догнал словарь — правьте .sldd руками по WIRING_OIL.md,
+% а этот файл держите как справку о составе шин.
 %
 % Порядок элементов внутри шин критичен: он должен совпадать с порядком
 % полей в структурах, которые собирает код. Не переставлять.
@@ -33,8 +39,6 @@ mkbus(sec, 'BusTricInputs', {
     'eta_o'   'double'  1
     'd50'     'double'  1
     'x50'     'double'  1
-    'x50_so'  'double'  1
-    'frac_s_in_oil' 'double' 1
     'eps_s'   'double'  1
     'eps_wd'  'double'  1
     'eps_wf'  'double'  1
@@ -43,7 +47,9 @@ mkbus(sec, 'BusTricInputs', {
     'Ro'      'double'  1
     'Q'       'double'  1
     'dn'      'double'  1
-    'C'       'double'  1 });
+    'C'       'double'  1
+    'x50_so'        'double'  1
+    'frac_s_in_oil' 'double'  1 });
 
 % Параметры: 20 элементов
 mkbus(sec, 'BusTricParams', {
@@ -166,8 +172,6 @@ inp = struct( ...
     'eta_o',  0.03,     ...
     'd50',    3.0e-6,   ...
     'x50',    1.5e-6,   ...
-    'x50_so', 0.0,      ...
-    'frac_s_in_oil', 0.25, ...
     'eps_s',  0.02,     ...
     'eps_wd', 0.08,     ...
     'eps_wf', 0.30,     ...
@@ -176,7 +180,9 @@ inp = struct( ...
     'Ro',     0.028,    ...
     'Q',      30/3.6e6, ...
     'dn',     10.0,     ...
-    'C',      1500.0);
+    'C',      1500.0,   ...
+    'x50_so', 0.0,      ...
+    'frac_s_in_oil', 0.25);
 
 pPar = Simulink.Parameter(p);
 pPar.DataType = 'Bus: BusTricParams';

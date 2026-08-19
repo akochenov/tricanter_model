@@ -58,36 +58,41 @@ y.streams.x_o_in_water = 0.0;
 y.streams.x_s_in_cake  = 0.0;
 
 % --- quality ---
+% ПОРЯДОК ПРИСВАИВАНИЯ = порядок полей структуры, и он обязан совпасть
+% с порядком элементов в BusQuality. Новые поля идут В КОНЦЕ, после
+% tau_c, а не по смыслу — см. WIRING_OIL.md.
 % При нулевом входе эффективность по соглашению нуль, а не NaN.
 y.quality.U          = 0.0;
 y.quality.E_s        = 0.0;
-y.quality.E_so       = 0.0;
-y.quality.E_w        = 0.0;
-y.quality.E_s_tot    = 0.0;
 if phi_s0 > 0
     y.quality.E_s = 1 - phi_s_out / phi_s0;
 end
-if phi_so0 > 0
-    y.quality.E_so = 1 - phi_so_out / phi_so0;
-end
+y.quality.E_w        = 0.0;
 if phi_w0 > 0
     y.quality.E_w = 1 - phi_w_out / phi_w0;
 end
-if u.eps_s > 0
-    esc = geo.Qw * phi_s_out + geo.Qo * phi_so_out;    % унос твёрдого, м3/с
-    y.quality.E_s_tot = 1 - esc / (u.Q * u.eps_s);
-end
-y.quality.phi_s_out   = phi_s_out;
-y.quality.phi_so_out  = phi_so_out;
-y.quality.phi_w_out   = phi_w_out;
-y.quality.bsw         = phi_w_out + phi_so_out;
-y.quality.phi_s_prof  = sum(phi_s, 2);
-y.quality.phi_so_prof = sum(phi_so, 2);
-y.quality.phi_w_prof  = sum(phi_w, 2);
+y.quality.phi_s_out  = phi_s_out;
+y.quality.phi_w_out  = phi_w_out;
+y.quality.phi_s_prof = sum(phi_s, 2);
+y.quality.phi_w_prof = sum(phi_w, 2);
 % E_s_i — доля осевшего в ячейке от вошедшего в неё. Это НЕ cap_s:
 % cap_s падает вдоль машины в тысячи раз, E_s_i — в десяток.
 y.quality.E_s_i      = zeros(n,1);
 y.quality.tau_c      = 0.0;
+
+% --- новые поля: третья популяция ---
+y.quality.E_so       = 0.0;
+if phi_so0 > 0
+    y.quality.E_so = 1 - phi_so_out / phi_so0;
+end
+y.quality.E_s_tot    = 0.0;
+if u.eps_s > 0
+    esc = geo.Qw * phi_s_out + geo.Qo * phi_so_out;    % унос твёрдого, м3/с
+    y.quality.E_s_tot = 1 - esc / (u.Q * u.eps_s);
+end
+y.quality.phi_so_out  = phi_so_out;
+y.quality.bsw         = phi_w_out + phi_so_out;
+y.quality.phi_so_prof = sum(phi_so, 2);
 
 % --- flags ---
 flags = tric_limits(geo, u, pc);
@@ -99,6 +104,9 @@ y.flags.f_overload       = false;
 y.flags.f_overfill       = false;
 y.flags.f_M1_limit = false;
 y.flags.f_M2_limit = false;
+% Проверки состава подачи — из tric_limits, тоже в конце шины.
+y.flags.f_feed_sum   = flags.feed_sum;
+y.flags.f_frac_range = flags.frac_range;
 
 % --- drives ---
 y.drives.M1 = 0;
