@@ -6,7 +6,7 @@ function [dm, tr] = tric_cake_balance(Rtr, E_s_i, geo, pc)
 %   dm    — n×1, dm/dt, кг/с
 %   tr    — n×1, поток кека из ячейки i в сторону выгрузки, кг/с
 %
-% ПОКА_ЗАГЛУШКА: нулевой баланс. Эталон: ref/cake_*.csv (колонки tr, dm).
+% GOOD: нулевой баланс. Эталон: ref/cake_*.csv (колонки tr, dm).
 %
 %   tr = phi_sed*rho_s*pi*(Rd^2 - Rtr^2)*u_ax
 %   dm = rho_s*Qw*cap_s + [tr(2:end); 0] - tr
@@ -15,6 +15,6 @@ function [dm, tr] = tric_cake_balance(Rtr, E_s_i, geo, pc)
 
 n = tric_dims();
 
-dm = zeros(n,1);
-tr = zeros(n,1);
+tr = pc.phi_sed*pc.rho_s*pi*(pc.Rd^2 - Rtr^2)*geo.u_ax;
+dm = pc.rho_s*geo.Qw*cap_s + [tr(2:end); 0] - tr;
 end
