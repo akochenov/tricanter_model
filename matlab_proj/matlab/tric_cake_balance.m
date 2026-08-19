@@ -1,4 +1,4 @@
-function [dm, tr] = tric_cake_balance(Rtr, E_s_i, geo, pc)
+function [dm, tr] = tric_cake_balance(Rtr, cap_s, geo, pc)
 %TRIC_CAKE_BALANCE Транспорт кека шнеком и баланс масс. Владелец: C.
 %
 %   Rtr   — n×1, радиус поверхности кека, м

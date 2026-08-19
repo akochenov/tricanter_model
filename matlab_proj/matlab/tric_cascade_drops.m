@@ -2,7 +2,8 @@ function [phi_w_next, phi_w_out] = tric_cascade_drops(phi_w, geo, u, pc, dt)
 %TRIC_CASCADE_DROPS Осаждение капель воды в нефтяном кольце. Владелец: B.
 %
 %   phi_w      — n×J, концентрации с предыдущего шага (СОСТОЯНИЕ)
-%   geo, u, pc — шины
+%   geo        — шина BusTricGeo
+%   u, pc      — шины входов и параметров
 %   dt         — шаг по времени, с
 %   phi_w_next — n×J, концентрации на следующий шаг
 %   phi_w_out  — остаточная обводнённость нефти

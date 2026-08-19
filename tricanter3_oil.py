@@ -68,7 +68,7 @@ class Params:
     eta_w: float = 1e-3      # вязкость воды, Па·с
     eta_o: float = 0.03      # вязкость нефти, Па·с
 
-    C: float = 25.0        # фактор разделения, g
+    C: float = 1500.0        # фактор разделения, g
     Q: float = 30 / 3.6e6    # подача, м3/с
     dn: float = 10.0         # диф. скорость шнека, об/мин
 
@@ -450,6 +450,10 @@ def simulate_dyn(p, t_end, dt, inputs=None):
             T_w = grade(xw, k_w, tau_o * fc, pref_o, phi_w, p.phi_max)
             decay_o = np.exp(-dt / np.maximum(tau_o, 1e-9))
 
+
+        #plt.plot(phi_so)
+        #plt.show()
+
         cap_s = np.zeros(p.n)
         s_next = np.empty_like(phi_s)
         so_next = np.empty_like(phi_so)
@@ -500,7 +504,9 @@ def simulate_dyn(p, t_end, dt, inputs=None):
         for k in OUTS:
             hist[k][i] = out[k]
         dH_hist[i] = dH
+    plt.show()
     return dict(t=t, dH=dH_hist, **hist)
+
 
 
 def step(t0, before, after):
@@ -508,7 +514,7 @@ def step(t0, before, after):
     return lambda t: before if t < t0 else after
 
 
-def simulate(p, t_end=1500.0, dt=1.0, inputs=None, dynamic=False):
+def simulate(p, t_end=1500.0, dt=1.0, inputs=None, dynamic=True):
     """Явный Эйлер по массе кека.
 
     inputs — расписание входов, {имя параметра: функция от времени}, напр.
@@ -666,3 +672,43 @@ if __name__ == "__main__":
 
     plot(p, 1500)
     plt.show()
+    # ------------------------------------------------------------
+    # Масса осадка (кека) в каждой ячейке в установившемся режиме
+    # ------------------------------------------------------------
+
+    dH_final = r["dH"][-1]          # толщина кека в последний момент времени, м
+    Rtr_final = p.Rd - dH_final     # радиус поверхности кека, м
+
+    m_cake = (
+        p.rho_s
+        * p.phi_sed
+        * np.pi
+        * (p.Rd**2 - Rtr_final**2)
+        * p.Lax
+    )                               # кг в каждой ячейке
+
+    cells = np.arange(1, p.n + 1)
+
+    plt.figure(figsize=(10, 5))
+    plt.bar(cells, m_cake * 1000)   # перевод кг -> г
+
+    plt.xlabel("Номер ячейки")
+    plt.ylabel("Масса кека, г")
+    plt.title("Распределение массы осадка по ячейкам")
+    plt.xticks(cells)
+    plt.grid(axis="y", alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+    print("\nМасса кека по ячейкам:")
+    for i, m in enumerate(m_cake, start=1):
+        print(f"ячейка {i:2d}: {m*1000:.4f} г")
+
+    print(f"\nОбщая масса кека в машине: {m_cake.sum()*1000:.3f} г")
+
+
+    
+
+    
+
+
