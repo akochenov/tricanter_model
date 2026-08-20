@@ -28,7 +28,6 @@ Lax = pc.Lpond / n;
 % захват на осевой срез ~ R(x)^2, отсюда int R^2 dx / Rd^2
 t      = tan(pc.alpha * pi/180);
 L_cone = (pc.Rd^3 - u.Rw^3) / (3*t) / pc.Rd^2;
-
 if pc.Lsep > 0
     L_eff = pc.Lsep;
 else
