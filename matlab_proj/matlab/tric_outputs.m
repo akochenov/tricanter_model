@@ -273,4 +273,7 @@ y.drives.M1 = 0;
 y.drives.P1 = 0;
 y.drives.M2 = 0;
 y.drives.P2 = 0;
+[J_load, K_pre, M_scroll] = tric_inertia(m, Rtr, geo, u, pc);
+y.drives.J_load = J_load;
+y.drives.K_pre  = K_pre;
 end
